@@ -1,4 +1,5 @@
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { IoEye } from "react-icons/io5";
 import {
   Accordion,
   AccordionDetails,
@@ -26,6 +27,7 @@ function Disciplines() {
   const { token } = useAuth();
   const [terms, setTerms] = useState<TestByDiscipline[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [refresh, setRefresh] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadPage() {
@@ -37,7 +39,7 @@ function Disciplines() {
       setCategories(categoriesData.categories);
     }
     loadPage();
-  }, [token]);
+  }, [token, refresh]);
 
   return (
     <>
@@ -76,7 +78,7 @@ function Disciplines() {
             Adicionar
           </Button>
         </Box>
-        <TermsAccordions categories={categories} terms={terms} />
+        <TermsAccordions categories={categories} terms={terms} api={api} refresh={refresh} setRefresh={setRefresh} />
       </Box>
     </>
   );
@@ -85,9 +87,12 @@ function Disciplines() {
 interface TermsAccordionsProps {
   categories: Category[];
   terms: TestByDiscipline[];
+  api: any;
+  refresh: boolean;
+  setRefresh: (value: boolean) => void;
 }
 
-function TermsAccordions({ categories, terms }: TermsAccordionsProps) {
+function TermsAccordions({ categories, terms, api, refresh, setRefresh }: TermsAccordionsProps) {
   return (
     <Box sx={{ marginTop: "50px" }}>
       {terms.map((term) => (
@@ -99,6 +104,9 @@ function TermsAccordions({ categories, terms }: TermsAccordionsProps) {
             <DisciplinesAccordions
               categories={categories}
               disciplines={term.disciplines}
+              api={api}
+              refresh={refresh}
+              setRefresh={setRefresh}
             />
           </AccordionDetails>
         </Accordion>
@@ -110,11 +118,17 @@ function TermsAccordions({ categories, terms }: TermsAccordionsProps) {
 interface DisciplinesAccordionsProps {
   categories: Category[];
   disciplines: Discipline[];
+  api: any;
+  refresh: boolean;
+  setRefresh: (value: boolean) => void;
 }
 
 function DisciplinesAccordions({
   categories,
   disciplines,
+  api,
+  refresh,
+  setRefresh
 }: DisciplinesAccordionsProps) {
   if (disciplines.length === 0)
     return <Typography>Nenhuma prova para esse período...</Typography>;
@@ -133,6 +147,9 @@ function DisciplinesAccordions({
             <Categories
               categories={categories}
               teachersDisciplines={discipline.teacherDisciplines}
+              api={api}
+              refresh={refresh}
+              setRefresh={setRefresh}
             />
           </AccordionDetails>
         </Accordion>
@@ -144,9 +161,12 @@ function DisciplinesAccordions({
 interface CategoriesProps {
   categories: Category[];
   teachersDisciplines: TeacherDisciplines[];
+  api: any;
+  refresh: boolean;
+  setRefresh: (value: boolean) => void;
 }
 
-function Categories({ categories, teachersDisciplines }: CategoriesProps) {
+function Categories({ categories, teachersDisciplines, api, refresh, setRefresh }: CategoriesProps) {
   if (teachersDisciplines.length === 0)
     return <Typography>Nenhuma prova para essa disciplina...</Typography>;
 
@@ -160,6 +180,9 @@ function Categories({ categories, teachersDisciplines }: CategoriesProps) {
             <TeachersDisciplines
               categoryId={category.id}
               teachersDisciplines={teachersDisciplines}
+              api={api}
+              refresh={refresh}
+              setRefresh={setRefresh}
             />
           </Box>
         ))}
@@ -170,6 +193,9 @@ function Categories({ categories, teachersDisciplines }: CategoriesProps) {
 interface TeacherDisciplineProps {
   teachersDisciplines: TeacherDisciplines[];
   categoryId: number;
+  api: any;
+  refresh: boolean;
+  setRefresh: (value: boolean) => void;
 }
 
 function doesCategoryHaveTests(teachersDisciplines: TeacherDisciplines[]) {
@@ -190,6 +216,9 @@ function testOfCategory(test: Test, categoryId: number) {
 function TeachersDisciplines({
   categoryId,
   teachersDisciplines,
+  api,
+  refresh,
+  setRefresh
 }: TeacherDisciplineProps) {
   const testsWithDisciplines = teachersDisciplines.map((teacherDiscipline) => ({
     tests: teacherDiscipline.tests,
@@ -197,33 +226,55 @@ function TeachersDisciplines({
   }));
 
   return (
-    <Tests categoryId={categoryId} testsWithTeachers={testsWithDisciplines} />
+    <Tests
+      categoryId={categoryId}
+      testsWithTeachers={testsWithDisciplines}
+      api={api} 
+      refresh={refresh}
+      setRefresh={setRefresh} />
   );
 }
 
 interface TestsProps {
   testsWithTeachers: { tests: Test[]; teacherName: string }[];
   categoryId: number;
+  api: any;
+  refresh: boolean;
+  setRefresh: (value: boolean) => void;
 }
 
 function Tests({
   categoryId,
   testsWithTeachers: testsWithDisciplines,
+  api,
+  refresh,
+  setRefresh
 }: TestsProps) {
+
+  async function handleAddView(id: number) {
+    await api.addView(id);
+    setRefresh(!refresh);
+  }
+
   return (
     <>
       {testsWithDisciplines.map((testsWithDisciplines) =>
         testsWithDisciplines.tests
           .filter((test) => testOfCategory(test, categoryId))
           .map((test) => (
-            <Typography key={test.id} color="#878787">
-              <Link
-                href={test.pdfUrl}
-                target="_blank"
-                underline="none"
-                color="inherit"
-              >{`${test.name} (${testsWithDisciplines.teacherName})`}</Link>
-            </Typography>
+            <>
+              <Typography key={test.id} color="#878787" sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Link
+                  href={test.pdfUrl}
+                  target="_blank"
+                  underline="none"
+                  color="inherit"
+                  onClick={() => handleAddView(test.id)}
+                >{`${test.name} (${testsWithDisciplines.teacherName})`}</Link>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{test.views}<IoEye></IoEye></Box>
+              </Typography>
+            </>
+
           ))
       )}
     </>
