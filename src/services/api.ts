@@ -59,6 +59,7 @@ export interface Test {
   name: string;
   pdfUrl: string;
   category: Category;
+  views: number;
 }
 
 export interface CreateTestData {
@@ -110,6 +111,10 @@ async function getTeachers(token: string, disciplineId: string) {
   return baseAPI.get<{ teachers: Teacher[] }>(`/teachers/disciplines/${disciplineId}`, config);
 }
 
+async function addView(testId: string) {
+  return baseAPI.post(`/tests/${testId}/views`);
+}
+
 async function createTest(createTestData: CreateTestData, token: string | null) {
   const config = getConfig(token as string);
 
@@ -125,6 +130,7 @@ const api = {
   getDisciplines,
   getTeachers,
   createTest,
+  addView
 };
 
 export default api;
