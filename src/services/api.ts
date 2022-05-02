@@ -88,10 +88,10 @@ async function getTestsByDiscipline(token: string) {
   );
 }
 
-async function getTestsByTeacher(token: string) {
+async function getTestsByTeacher(token: string, name?: string) {
   const config = getConfig(token);
   return baseAPI.get<{ tests: TestByTeacher[] }>(
-    "/tests?groupBy=teachers",
+    `/tests?groupBy=teachers&q=${name}`,
     config
   );
 }
