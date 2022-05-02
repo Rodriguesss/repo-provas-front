@@ -27,6 +27,7 @@ function Instructors() {
   const [teachersDisciplines, setTeachersDisciplines] = useState<
     TestByTeacher[]
   >([]);
+  const [searchData, setSearchData] = useState<string>("")
   const [categories, setCategories] = useState<Category[]>([]);
   const [refresh, setRefresh] = useState<boolean>(false);
 
@@ -42,11 +43,30 @@ function Instructors() {
     loadPage();
   }, [token, refresh]);
 
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearchData(e.target.value);
+  }
+
+  async function refreshSetTeachersDisciplines(value?: string, token?: string) {
+    const { data: testsData } = await api.getTestsByTeacher(token as string, value);
+    setTeachersDisciplines(testsData.tests);
+  }
+
+  interface EventValue {
+    value?: 'string';
+  }
+
   return (
     <>
       <TextField
         sx={{ marginX: "auto", marginBottom: "25px", width: "450px" }}
         label="Pesquise por pessoa instrutora"
+        onChange={handleSearchChange}
+        onKeyUp={(e: React.KeyboardEvent<HTMLDivElement>) => {
+          const target = e.target as EventValue;
+          refreshSetTeachersDisciplines(target.value, token as string);
+        }}
+        value={searchData}
       />
       <Divider sx={{ marginBottom: "35px" }} />
       <Box

@@ -246,7 +246,6 @@ function FormCreateTest({
               teacher: '',
               discipline: option?.name
             })
-            console.log(disciplineId);
           }}
           renderInput={(params) => <TextField {...params} label="Disciplina" />}
         />
