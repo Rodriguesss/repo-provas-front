@@ -1,4 +1,5 @@
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { IoEye } from "react-icons/io5";
 import {
   Accordion,
   AccordionDetails,
@@ -27,6 +28,7 @@ function Instructors() {
     TestByTeacher[]
   >([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [refresh, setRefresh] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadPage() {
@@ -38,7 +40,7 @@ function Instructors() {
       setCategories(categoriesData.categories);
     }
     loadPage();
-  }, [token]);
+  }, [token, refresh]);
 
   return (
     <>
@@ -80,6 +82,9 @@ function Instructors() {
         <TeachersDisciplinesAccordions
           categories={categories}
           teachersDisciplines={teachersDisciplines}
+          api={api}
+          refresh={refresh}
+          setRefresh={setRefresh}
         />
       </Box>
     </>
@@ -89,11 +94,17 @@ function Instructors() {
 interface TeachersDisciplinesAccordionsProps {
   teachersDisciplines: TestByTeacher[];
   categories: Category[];
+  api: any;
+  refresh: boolean;
+  setRefresh: (value: boolean) => void;
 }
 
 function TeachersDisciplinesAccordions({
   categories,
   teachersDisciplines,
+  api,
+  refresh,
+  setRefresh
 }: TeachersDisciplinesAccordionsProps) {
   const teachers = getUniqueTeachers(teachersDisciplines);
 
@@ -113,6 +124,9 @@ function TeachersDisciplinesAccordions({
                   category={category}
                   teacher={teacher}
                   teachersDisciplines={teachersDisciplines}
+                  api={api}
+                  refresh={refresh}
+                  setRefresh={setRefresh}
                 />
               ))}
           </AccordionDetails>
@@ -157,12 +171,18 @@ interface CategoriesProps {
   teachersDisciplines: TeacherDisciplines[];
   category: Category;
   teacher: string;
+  api: any;
+  refresh: boolean;
+  setRefresh: (value: boolean) => void;
 }
 
 function Categories({
   category,
   teachersDisciplines,
   teacher,
+  api,
+  refresh,
+  setRefresh,
 }: CategoriesProps) {
   return (
     <>
@@ -179,6 +199,9 @@ function Categories({
                 (test) => test.category.id === category.id
               )}
               disciplineName={teacherDiscipline.discipline.name}
+              api={api}
+              refresh={refresh}
+              setRefresh={setRefresh}
             />
           ))}
       </Box>
@@ -189,19 +212,35 @@ function Categories({
 interface TestsProps {
   disciplineName: string;
   tests: Test[];
+  api: any;
+  refresh: boolean;
+  setRefresh: (value: boolean) => void;
 }
 
-function Tests({ tests, disciplineName }: TestsProps) {
+function Tests({
+  tests,
+  disciplineName,
+  api,
+  refresh,
+  setRefresh, }: TestsProps) {
+
+  async function handleAddView(id: number) {
+    await api.addView(id);
+    setRefresh(!refresh);
+  }
+
   return (
     <>
       {tests.map((test) => (
-        <Typography key={test.id} color="#878787">
+        <Typography key={test.id} color="#878787" sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Link
             href={test.pdfUrl}
             target="_blank"
             underline="none"
             color="inherit"
+            onClick={() => handleAddView(test.id)}
           >{`${test.name} (${disciplineName})`}</Link>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{test.views}<IoEye></IoEye></Box>
         </Typography>
       ))}
     </>
